@@ -1,0 +1,951 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Gingerblast - Lost iOS 2011 HTML5</title>
+<style>
+  :root{
+    --cream:#fff2ca; --brown:#7b3f1d; --deep:#2a1b17; --gold:#f8c857; --red:#d64b34;
+  }
+  html,body{margin:0;height:100%;overflow:hidden;background:#152d4e;font-family:"Trebuchet MS",Verdana,sans-serif;color:var(--cream);}
+  body:before{content:"";position:fixed;inset:0;pointer-events:none;background:linear-gradient(rgba(255,255,255,.07) 50%,rgba(0,0,0,.04) 50%);background-size:100% 4px;mix-blend-mode:soft-light;z-index:8;}
+  #wrap{position:relative;width:100vw;height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 15%,#4ba2dc 0,#174577 62%,#0d233e 100%);}
+  canvas{width:min(100vw, calc(100vh * 16 / 9));height:min(100vh, calc(100vw * 9 / 16));image-rendering:auto;box-shadow:0 0 0 8px rgba(255,255,255,.12),0 20px 70px rgba(0,0,0,.55);border-radius:18px;background:#68b5e5;touch-action:none;}
+  .hud{position:absolute;left:50%;top:12px;transform:translateX(-50%);width:min(96vw,960px);display:flex;gap:8px;align-items:center;justify-content:space-between;z-index:10;pointer-events:none;}
+  .panel{pointer-events:auto;background:linear-gradient(#ffeeb3,#d99b43);border:2px solid #fff4c8;border-bottom-color:#6f3517;border-radius:15px;color:#3d1c0d;text-shadow:0 1px 0 rgba(255,255,255,.6);box-shadow:inset 0 2px 0 rgba(255,255,255,.6),0 4px 10px rgba(0,0,0,.3);padding:7px 10px;font-weight:bold;}
+  button.panel{cursor:pointer;font-family:inherit;font-size:14px;}
+  button.panel:active{transform:translateY(1px);box-shadow:inset 0 1px 4px rgba(0,0,0,.25),0 2px 5px rgba(0,0,0,.25);}
+  #levelButtons{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);width:min(96vw,960px);display:flex;gap:5px;justify-content:center;z-index:10;pointer-events:none;}
+  #levelButtons button{pointer-events:auto;width:36px;height:31px;padding:0;font-size:13px;}
+  #levelButtons button.done{background:linear-gradient(#d8ffd1,#7ed66e);}
+  #levelButtons button.active{outline:3px solid rgba(255,255,255,.75);}
+  #overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:20;background:radial-gradient(circle,rgba(39,76,113,.55),rgba(0,0,0,.72));}
+  #card{width:min(720px,88vw);text-align:center;background:linear-gradient(#8e4c25,#472312);border:4px solid #ffe49d;border-radius:28px;box-shadow:inset 0 3px 0 rgba(255,255,255,.2),0 25px 90px rgba(0,0,0,.65);padding:24px;color:#ffeec2;}
+  #card img{max-width:min(480px,80vw);filter:drop-shadow(0 5px 0 #43200d);}
+  #card h1{font-size:42px;margin:5px 0 6px;text-shadow:0 4px 0 #2c1308;}
+  #card p{line-height:1.35;font-size:16px;margin:10px auto;max-width:610px;color:#fff8dc;}
+  #card .small{font-size:13px;opacity:.9;}
+  #playBtn{margin-top:10px;font-size:20px;padding:12px 22px;}
+  #msg{position:absolute;left:50%;top:70px;transform:translateX(-50%);z-index:11;pointer-events:none;min-width:280px;text-align:center;font-weight:bold;font-size:18px;text-shadow:0 2px 0 rgba(0,0,0,.5);}
+
+  .menuTop{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;}
+  .menuTop h1{margin:0;font-size:40px;line-height:1;text-shadow:0 4px 0 #2c1308;}
+  .menuHint{font-size:13px;color:#fff6d8;margin:6px 0 12px;}
+  #episodeCards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:12px 0;}
+  .episodeCard{cursor:pointer;text-align:left;border:3px solid rgba(255,238,178,.85);border-radius:20px;padding:14px;background:linear-gradient(#ffe8a4,#bd6b2d);color:#3b1b0d;box-shadow:inset 0 2px 0 rgba(255,255,255,.55),0 8px 18px rgba(0,0,0,.32);min-height:104px;}
+  .episodeCard.active{outline:4px solid rgba(255,255,255,.75);background:linear-gradient(#fff5bc,#e9953d);}
+  .episodeCard.locked{filter:saturate(.35);opacity:.72;}
+  .episodeCard strong{display:block;font-size:18px;text-shadow:0 1px 0 rgba(255,255,255,.45);}
+  .episodeCard span{display:block;font-size:13px;margin-top:5px;line-height:1.25;}
+  #menuLevelGrid{display:grid;grid-template-columns:repeat(10,1fr);gap:6px;margin:14px auto 12px;max-width:610px;}
+  #menuLevelGrid button{height:38px;padding:0;font-size:15px;}
+  #menuLevelGrid button.done{background:linear-gradient(#d8ffd1,#7ed66e);}
+  #menuLevelGrid button.active{outline:3px solid rgba(255,255,255,.75);}
+  .menuActions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;}
+  .hud .rightBtns{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;}
+  button.panel.used{filter:grayscale(.75);opacity:.65;}
+  @media (max-width:760px){#episodeCards{grid-template-columns:1fr}.menuTop h1{font-size:31px}#menuLevelGrid{grid-template-columns:repeat(5,1fr)}}
+  @media (max-width:760px){.hud{top:6px}.panel{font-size:12px;padding:5px 7px}#msg{font-size:14px;top:55px}#levelButtons button{width:29px;height:28px}}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="game" width="960" height="540" aria-label="Gingerblast game canvas"></canvas>
+  <div class="hud">
+    <div class="panel" id="status">Level 1 · Shots 0</div>
+    <div class="rightBtns">
+      <button class="panel" id="menuBtn">Menu</button>
+      <button class="panel" id="restart">Restart</button>
+      <button class="panel" id="music">Music On</button>
+      <button class="panel" id="ability">Ability</button>
+      <button class="panel" id="eagle">Mighty Treat</button>
+    </div>
+  </div>
+  <div id="msg"></div>
+  <div id="levelButtons"></div>
+  <div id="overlay">
+    <div id="card">
+      <div class="menuTop">
+        <img src="logo_gingerblast.png" alt="Gingerblast logo" onerror="this.style.display='none'" />
+      </div>
+      <h1>Gingerblast</h1>
+      <p class="menuHint">Pick an episode and level. Drag farther than before for a stronger shot. Tap/click during flight for stronger character powers. Pooled liquids now shove, float, fizz, stick, and drown enemies. Mighty Treat clears once per level.</p>
+      <div id="episodeCards"></div>
+      <div id="menuLevelGrid"></div>
+      <div class="menuActions">
+        <button class="panel" id="playBtn">Play Selected Level</button>
+      </div>
+      <p class="small" id="episodeBlurb"></p>
+    </div>
+  </div>
+</div>
+<audio id="bgm" src="music_theme.mp3" loop preload="auto"></audio>
+<audio id="sndLaunch" src="sfx_launch.mp3" preload="auto"></audio>
+<audio id="sndHit" src="sfx_hit.mp3" preload="auto"></audio>
+<audio id="sndShatter" src="sfx_shatter.mp3" preload="auto"></audio>
+<audio id="sndSplash" src="sfx_splash.mp3" preload="auto"></audio>
+<audio id="sndWin" src="sfx_win.mp3" preload="auto"></audio>
+<script>
+(() => {
+  "use strict";
+  const canvas = document.getElementById("game");
+  const ctx = canvas.getContext("2d");
+  const W = canvas.width, H = canvas.height;
+  const ui = {
+    status: document.getElementById("status"), restart: document.getElementById("restart"),
+    music: document.getElementById("music"), ability: document.getElementById("ability"), eagle: document.getElementById("eagle"), menuBtn: document.getElementById("menuBtn"),
+    overlay: document.getElementById("overlay"), playBtn: document.getElementById("playBtn"), episodeCards: document.getElementById("episodeCards"), episodeBlurb: document.getElementById("episodeBlurb"),
+    levelButtons: document.getElementById("levelButtons"), menuLevelGrid: document.getElementById("menuLevelGrid"), msg: document.getElementById("msg")
+  };
+  const audio = {
+    bgm: document.getElementById("bgm"), launch: document.getElementById("sndLaunch"),
+    hit: document.getElementById("sndHit"), shatter: document.getElementById("sndShatter"),
+    splash: document.getElementById("sndSplash"), win: document.getElementById("sndWin")
+  };
+  const ASSETS = {};
+  const assetList = ["bg_2011.png","slingshot.png","ginger_classic.png","ginger_frosted.png","ginger_molasses.png","ginger_snapper.png","mallow_plain.png","mallow_toasted.png","mallow_strawberry.png","mallow_twist.png","mallow_mint.png","cane_classic.png","cane_peppermint.png","cane_licorice.png","cane_spearmint.png","cane_ribbon.png","mug_cocoa.png","mug_cider.png","mug_milk.png","mug_tea.png","mug_lemonade.png","choc_milk.png","choc_dark.png","choc_white.png","choc_caramel.png","choc_sprinkle.png","soda_cola.png","soda_orange.png","soda_grape.png","soda_lime.png","soda_rootbeer.png","gumball_blue.png","gumball_cherry.png","gumball_lime.png","gumball_grape.png","gumball_jawbreaker.png","coin_gold.png","coin_silver.png","coin_copper.png","coin_ruby.png","coin_emerald.png","pop_cherry.png","pop_blue.png","pop_orange.png","pop_grape.png","pop_rainbow.png","cat_tabby.png","cat_black.png","cat_calico.png","cat_siamese.png","cat_icecream.png","mighty_treat.png","block_wood.png","block_glass.png","block_stone.png"];
+  for (const name of assetList) {
+    const img = new Image(); img.src = name; img.onload = () => img.ok = true; img.onerror = () => img.ok = false; ASSETS[name] = img;
+  }
+  const rand = (a,b) => a + Math.random() * (b-a);
+  const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+  const len = (x,y)=>Math.hypot(x,y);
+  const liquidColors = { cocoa:"#6a371f", cider:"#d97a28", milk:"#eef8ff", tea:"#8a5a25", lemonade:"#ffe96a", chocolate:"#5a2b1c", darkchoc:"#341810", whitechoc:"#f3dfb4", caramel:"#c47528", strawberry:"#ff90b5", mint:"#bff5df", cola:"#45220f", orange:"#ff9b31", grape:"#7430a6", lime:"#8ee85d", rootbeer:"#5d3218", gold:"#f8d04e", silver:"#dbe8f0", copper:"#c77339", ruby:"#e94868", emerald:"#4fc56b", bubblegum:"#ff88cc", jawbreaker:"#fff176", cherryice:"#f35d7a", blueice:"#72d9ff", orangecream:"#ffa447", grapeice:"#9b68df", rainbowice:"#9cf0c4", catnip:"#95df6c", milkshake:"#ffe5f0" };
+  const sodaLiquids = new Set(["cola","orange","grape","lime","rootbeer"]);
+  const stickyLiquids = new Set(["chocolate","darkchoc","whitechoc","caramel","strawberry","bubblegum","jawbreaker","catnip","milkshake"]);
+  const coolLiquids = new Set(["milk","lemonade","mint","cherryice","blueice","orangecream","grapeice","rainbowice"]);
+  function liquidTrait(type) {
+    return {
+      soda: sodaLiquids.has(type),
+      sticky: stickyLiquids.has(type),
+      cool: coolLiquids.has(type),
+      buoyancy: sodaLiquids.has(type) ? 1.42 : stickyLiquids.has(type) ? .82 : 1,
+      push: sodaLiquids.has(type) ? 1.45 : stickyLiquids.has(type) ? .72 : 1,
+      drown: sodaLiquids.has(type) ? 1.28 : stickyLiquids.has(type) ? .95 : 1.08
+    };
+  }
+  const mugSprite = { cocoa:"mug_cocoa.png", cider:"mug_cider.png", milk:"mug_milk.png", tea:"mug_tea.png", lemonade:"mug_lemonade.png" };
+  const targetSprite = { milkbar:"choc_milk.png", darkbar:"choc_dark.png", whitebar:"choc_white.png", caramelbar:"choc_caramel.png", sprinklebar:"choc_sprinkle.png", soda_cola:"soda_cola.png", soda_orange:"soda_orange.png", soda_grape:"soda_grape.png", soda_lime:"soda_lime.png", soda_rootbeer:"soda_rootbeer.png", coin_gold:"coin_gold.png", coin_silver:"coin_silver.png", coin_copper:"coin_copper.png", coin_ruby:"coin_ruby.png", coin_emerald:"coin_emerald.png", cat_tabby:"cat_tabby.png", cat_black:"cat_black.png", cat_calico:"cat_calico.png", cat_siamese:"cat_siamese.png", cat_icecream:"cat_icecream.png" };
+  const birdDefs = {
+    classic:{name:"Classic Snap", sprite:"ginger_classic.png", r:24, mass:1, ability:"Second-wind speed boost"},
+    frosted:{name:"Frosted Trio", sprite:"ginger_frosted.png", r:23, mass:.92, ability:"Splits into three frosted crumbs"},
+    molasses:{name:"Molasses Bash", sprite:"ginger_molasses.png", r:27, mass:1.65, ability:"Turns into a heavy crusher"},
+    snapper:{name:"Ginger Snapper", sprite:"ginger_snapper.png", r:22, mass:1.05, ability:"Explosive snap shockwave"},
+    mallow:{name:"Pillow Mallow", sprite:"mallow_plain.png", r:24, mass:.94, ability:"Inflates and floats upward"},
+    toasted:{name:"Toasted Mallow", sprite:"mallow_toasted.png", r:25, mass:1.18, ability:"Hot shove that melts chocolate"},
+    strawberry:{name:"Strawberry Puff", sprite:"mallow_strawberry.png", r:23, mass:.88, ability:"Splits into three puffs"},
+    twist:{name:"Twist Mallow", sprite:"mallow_twist.png", r:22, mass:1.03, ability:"Drilling spin dash"},
+    mint:{name:"Mint Mallow", sprite:"mallow_mint.png", r:23, mass:.98, ability:"Freezing shock puff"},
+    cane:{name:"Candy Cane Scout", sprite:"cane_classic.png", r:23, mass:1.02, ability:"Long-range peppermint kick"},
+    peppermint:{name:"Peppermint Swirl", sprite:"cane_peppermint.png", r:24, mass:1.05, ability:"Big spinning mint burst"},
+    licorice:{name:"Licorice Hook", sprite:"cane_licorice.png", r:26, mass:1.45, ability:"Hooks downward into towers"},
+    spearmint:{name:"Spearmint Split", sprite:"cane_spearmint.png", r:22, mass:.92, ability:"Splits into sharp mini canes"},
+    ribbon:{name:"Ribbon Cane", sprite:"cane_ribbon.png", r:23, mass:.98, ability:"Floaty curling shot"},
+    gumblue:{name:"Blue Gumball", sprite:"gumball_blue.png", r:23, mass:1.05, ability:"Springy rebound charge"},
+    gumcherry:{name:"Cherry Gumball", sprite:"gumball_cherry.png", r:23, mass:1.02, ability:"Cherry pop shock burst"},
+    gumlime:{name:"Lime Gumball", sprite:"gumball_lime.png", r:22, mass:.92, ability:"Splits into three gumdrops"},
+    gumgrape:{name:"Grape Goo Ball", sprite:"gumball_grape.png", r:24, mass:1.18, ability:"Sticky gum slowdown"},
+    jawbreaker:{name:"Jawbreaker", sprite:"gumball_jawbreaker.png", r:27, mass:1.75, ability:"Heavy coin-cracker smash"},
+    popcherry:{name:"Cherry Popstick", sprite:"pop_cherry.png", r:24, mass:1.05, ability:"Fast red rocket shove"},
+    popblue:{name:"Blue Ice Pop", sprite:"pop_blue.png", r:24, mass:1.0, ability:"Freezes cats and pools"},
+    poporange:{name:"Orange Cream Pop", sprite:"pop_orange.png", r:25, mass:1.2, ability:"Creamy shove wave"},
+    popgrape:{name:"Grape Bite Pop", sprite:"pop_grape.png", r:23, mass:1.08, ability:"Drilling bite dash"},
+    poprainbow:{name:"Rainbow Pop", sprite:"pop_rainbow.png", r:23, mass:.96, ability:"Floaty rainbow arc"}
+  };
+  const blockDefs = {
+    wood:{sprite:"block_wood.png", hp:85, mass:2.1, bounce:.18, friction:.72, tint:"#a5622c"},
+    glass:{sprite:"block_glass.png", hp:42, mass:1.25, bounce:.28, friction:.84, tint:"#91ddeb"},
+    stone:{sprite:"block_stone.png", hp:160, mass:4.2, bounce:.09, friction:.62, tint:"#8b8b91"}
+  };
+
+  const levels = [
+    {name:"Cupcake Hill", birds:["classic","classic","frosted"], mugs:[[725,382,"cocoa"],[820,382,"milk"]], blocks:[[690,405,48,92,"wood"],[785,405,48,92,"wood"],[690,315,143,26,"glass"],[755,280,40,68,"wood"]]},
+    {name:"Tea Cart", birds:["classic","molasses","classic"], mugs:[[700,382,"tea"],[792,345,"cider"],[862,382,"tea"]], blocks:[[660,405,42,92,"wood"],[745,405,42,92,"wood"],[832,405,42,92,"wood"],[652,330,235,28,"stone"],[748,273,40,67,"glass"]]},
+    {name:"Frosting Ruins", birds:["frosted","classic","snapper"], mugs:[[705,385,"lemonade"],[789,301,"milk"],[868,385,"cocoa"]], blocks:[[666,405,38,90,"glass"],[744,405,38,90,"glass"],[824,405,38,90,"glass"],[651,334,229,24,"wood"],[730,265,114,24,"stone"],[784,303,35,60,"wood"]]},
+    {name:"Molasses Gate", birds:["molasses","classic","classic"], mugs:[[742,375,"cocoa"],[824,375,"cider"]], blocks:[[710,414,45,75,"stone"],[805,414,45,75,"stone"],[684,353,192,28,"wood"],[740,285,36,70,"stone"],[804,285,36,70,"stone"],[715,245,150,25,"glass"]]},
+    {name:"Milk Bath", birds:["classic","frosted","molasses","snapper"], mugs:[[660,396,"milk"],[760,396,"lemonade"],[850,370,"tea"]], blocks:[[620,424,42,55,"wood"],[735,424,42,55,"glass"],[830,424,42,55,"wood"],[600,388,270,22,"glass"],[690,326,155,20,"wood"]]},
+    {name:"Sugar Dock", birds:["snapper","classic","classic","frosted"], mugs:[[705,389,"cider"],[790,389,"tea"],[870,389,"cocoa"]], blocks:[[655,420,48,62,"wood"],[740,420,48,62,"wood"],[825,420,48,62,"wood"],[628,375,280,23,"glass"],[680,310,45,70,"stone"],[768,310,45,70,"stone"],[854,310,45,70,"stone"],[660,270,235,22,"wood"]]},
+    {name:"Cookie Causeway", birds:["classic","molasses","snapper","frosted"], mugs:[[675,393,"lemonade"],[785,393,"tea"],[875,340,"cocoa"]], blocks:[[635,425,45,56,"wood"],[745,365,45,115,"glass"],[845,425,45,56,"wood"],[615,394,300,22,"glass"],[700,318,185,22,"wood"],[820,275,40,48,"glass"]]},
+    {name:"Cocoa Keep", birds:["molasses","frosted","classic","snapper"], mugs:[[660,388,"cocoa"],[728,308,"cocoa"],[804,388,"milk"],[872,308,"cider"]], blocks:[[620,420,42,64,"stone"],[697,340,42,143,"stone"],[770,420,42,64,"wood"],[842,340,42,143,"wood"],[600,390,302,25,"wood"],[650,287,265,27,"glass"],[716,239,135,23,"stone"]]},
+    {name:"Swishworks", birds:["frosted","frosted","molasses","classic"], mugs:[[615,397,"milk"],[692,350,"tea"],[770,397,"lemonade"],[840,350,"cider"],[900,397,"cocoa"]], blocks:[[580,430,45,48,"glass"],[658,382,45,96,"glass"],[735,430,45,48,"glass"],[805,382,45,96,"glass"],[870,430,45,48,"glass"],[560,404,365,22,"wood"],[635,327,295,22,"stone"],[695,282,220,20,"wood"],[766,238,75,22,"glass"]]},
+    {name:"Final Sip", birds:["snapper","molasses","frosted","classic","classic"], mugs:[[620,390,"cocoa"],[688,318,"milk"],[755,390,"tea"],[824,318,"lemonade"],[892,390,"cider"]], blocks:[[585,425,40,55,"stone"],[655,352,40,130,"wood"],[725,425,40,55,"stone"],[794,352,40,130,"wood"],[862,425,40,55,"stone"],[566,397,347,22,"stone"],[615,326,317,23,"glass"],[682,267,210,24,"wood"],[735,224,104,23,"stone"],[772,180,32,48,"glass"]]}
+  ];
+
+  const marshmallowLevels = [
+    {name:"Chocolate Shore", birds:["mallow","mallow","strawberry","toasted"], mugs:[[725,386,"chocolate","milkbar"],[820,386,"whitechoc","whitebar"]], blocks:[[692,419,45,58,"wood"],[787,419,45,58,"glass"],[685,355,155,20,"glass"]]},
+    {name:"Fudge Fence", birds:["mallow","toasted","mallow","mint"], mugs:[[710,386,"darkchoc","darkbar"],[830,386,"caramel","caramelbar"]], blocks:[[665,421,42,54,"wood"],[790,421,42,54,"wood"],[650,368,225,20,"glass"]]},
+    {name:"Cocoa Camp", birds:["strawberry","mallow","twist","mallow"], mugs:[[705,388,"whitechoc","whitebar"],[848,388,"darkchoc","darkbar"]], blocks:[[665,421,38,60,"glass"],[807,421,38,60,"glass"],[645,365,235,21,"wood"],[736,315,105,20,"glass"]]},
+    {name:"Caramel Gate", birds:["toasted","mallow","mallow","mint"], mugs:[[742,382,"caramel","caramelbar"],[824,382,"darkchoc","darkbar"]], blocks:[[706,420,42,60,"wood"],[808,420,42,60,"wood"],[688,360,185,22,"glass"]]},
+    {name:"White Choc Wash", birds:["mallow","strawberry","toasted","twist"], mugs:[[640,397,"whitechoc","whitebar"],[770,397,"chocolate","sprinklebar"],[890,397,"caramel","caramelbar"]], blocks:[[610,426,42,46,"glass"],[740,426,42,46,"wood"],[860,426,42,46,"glass"],[592,388,325,20,"glass"],[700,330,170,20,"wood"]]},
+    {name:"S'more Dock", birds:["twist","mallow","mallow","strawberry","toasted"], mugs:[[705,392,"caramel","caramelbar"],[790,392,"darkchoc","darkbar"],[870,392,"chocolate","milkbar"]], blocks:[[655,424,48,50,"wood"],[740,424,48,50,"glass"],[825,424,48,50,"wood"],[628,378,280,20,"glass"],[710,318,160,20,"wood"]]},
+    {name:"Sprinkle Causeway", birds:["mallow","toasted","mint","strawberry","mallow"], mugs:[[666,395,"chocolate","sprinklebar"],[810,395,"darkchoc","darkbar"],[891,350,"caramel","caramelbar"]], blocks:[[625,426,45,50,"glass"],[770,426,45,50,"wood"],[865,382,45,94,"glass"],[605,394,323,20,"glass"],[690,335,205,20,"wood"]]},
+    {name:"Dark Bar Keep", birds:["toasted","strawberry","mallow","twist","mint"], mugs:[[660,390,"darkchoc","darkbar"],[804,390,"whitechoc","whitebar"],[872,330,"caramel","caramelbar"]], blocks:[[620,423,42,54,"stone"],[770,423,42,54,"wood"],[842,363,42,112,"glass"],[600,393,302,21,"glass"],[672,322,220,20,"wood"]]},
+    {name:"Mallow Swishworks", birds:["strawberry","strawberry","toasted","mallow","mint"], mugs:[[615,399,"whitechoc","whitebar"],[760,399,"chocolate","sprinklebar"],[900,399,"chocolate","milkbar"]], blocks:[[580,430,45,42,"glass"],[725,430,45,42,"glass"],[870,430,45,42,"wood"],[560,405,365,20,"glass"],[660,345,235,20,"wood"],[752,302,70,20,"glass"]]},
+    {name:"Final S'more", birds:["mint","toasted","strawberry","mallow","mallow","twist"], mugs:[[620,392,"darkchoc","darkbar"],[755,392,"chocolate","milkbar"],[824,330,"chocolate","sprinklebar"],[892,392,"caramel","caramelbar"]], blocks:[[585,425,40,50,"glass"],[725,425,40,50,"wood"],[862,425,40,50,"glass"],[566,397,347,20,"glass"],[640,336,285,20,"wood"],[735,284,115,20,"glass"]]}
+  ];
+
+  const peppermintLevels = [
+    {name:"Soda Stop", birds:["cane","cane","peppermint"], mugs:[[720,388,"cola","soda_cola"],[824,388,"orange","soda_orange"]], blocks:[[690,420,42,55,"glass"],[790,420,42,55,"wood"],[680,365,170,20,"glass"]]},
+    {name:"Fizz Fence", birds:["cane","licorice","ribbon"], mugs:[[705,390,"grape","soda_grape"],[840,390,"lime","soda_lime"]], blocks:[[665,422,42,54,"wood"],[805,422,42,54,"wood"],[650,368,225,21,"glass"]]},
+    {name:"Orange Outpost", birds:["spearmint","cane","peppermint","ribbon"], mugs:[[700,392,"orange","soda_orange"],[795,330,"cola","soda_cola"],[875,392,"rootbeer","soda_rootbeer"]], blocks:[[660,424,38,48,"glass"],[755,360,38,112,"wood"],[835,424,38,48,"glass"],[642,392,250,20,"glass"],[715,306,142,19,"wood"]]},
+    {name:"Cola Cart", birds:["licorice","cane","cane","peppermint"], mugs:[[740,386,"cola","soda_cola"],[828,386,"grape","soda_grape"]], blocks:[[704,421,44,58,"stone"],[806,421,44,58,"glass"],[685,360,188,20,"wood"],[755,312,55,20,"glass"]]},
+    {name:"Grape Bridge", birds:["ribbon","spearmint","cane","licorice"], mugs:[[640,398,"grape","soda_grape"],[780,398,"lime","soda_lime"],[890,358,"orange","soda_orange"]], blocks:[[610,426,42,46,"glass"],[748,426,42,46,"wood"],[858,386,42,86,"glass"],[592,390,325,20,"glass"],[700,335,175,20,"wood"]]},
+    {name:"Lime Ledge", birds:["peppermint","cane","ribbon","spearmint"], mugs:[[700,393,"lime","soda_lime"],[792,393,"cola","soda_cola"],[872,393,"rootbeer","soda_rootbeer"]], blocks:[[655,425,48,48,"wood"],[740,425,48,48,"glass"],[825,425,48,48,"wood"],[628,380,280,20,"glass"],[690,322,190,20,"wood"]]},
+    {name:"Root Beer Ruins", birds:["licorice","peppermint","cane","ribbon","cane"], mugs:[[666,396,"rootbeer","soda_rootbeer"],[810,396,"orange","soda_orange"],[891,342,"grape","soda_grape"]], blocks:[[625,426,45,50,"stone"],[770,426,45,50,"glass"],[865,374,45,102,"wood"],[605,395,323,20,"glass"],[690,332,210,20,"wood"],[850,287,45,20,"glass"]]},
+    {name:"Popworks", birds:["spearmint","peppermint","licorice","cane","ribbon"], mugs:[[620,399,"cola","soda_cola"],[735,350,"lime","soda_lime"],[852,399,"orange","soda_orange"],[900,350,"grape","soda_grape"]], blocks:[[585,430,42,42,"glass"],[700,382,42,90,"wood"],[818,430,42,42,"glass"],[870,382,42,90,"wood"],[565,405,360,20,"glass"],[655,330,275,20,"wood"]]},
+    {name:"Syrup Keep", birds:["licorice","spearmint","peppermint","cane","ribbon"], mugs:[[650,392,"rootbeer","soda_rootbeer"],[740,330,"cola","soda_cola"],[830,392,"grape","soda_grape"],[895,330,"lime","soda_lime"]], blocks:[[610,425,42,50,"stone"],[700,362,42,112,"glass"],[790,425,42,50,"stone"],[865,362,42,112,"glass"],[590,397,325,20,"wood"],[660,322,260,20,"glass"],[730,276,130,20,"wood"]]},
+    {name:"Final Fizz", birds:["peppermint","licorice","spearmint","ribbon","cane","cane"], mugs:[[620,392,"cola","soda_cola"],[710,335,"orange","soda_orange"],[795,392,"rootbeer","soda_rootbeer"],[870,335,"grape","soda_grape"],[910,392,"lime","soda_lime"]], blocks:[[585,425,40,50,"glass"],[675,365,40,110,"wood"],[760,425,40,50,"glass"],[835,365,40,110,"wood"],[890,425,40,50,"glass"],[566,397,363,20,"glass"],[620,335,310,20,"wood"],[700,285,210,20,"glass"],[760,242,88,20,"wood"]]}
+  ];
+
+
+  const gumballLevels = [
+    {name:"Penny Pop Park", birds:["gumblue","gumcherry","gumlime"], mugs:[[720,390,"gold","coin_gold"],[820,390,"silver","coin_silver"]], blocks:[[690,420,42,55,"glass"],[790,420,42,55,"wood"],[680,365,170,20,"glass"]]},
+    {name:"Nickel Nook", birds:["gumblue","gumgrape","gumlime"], mugs:[[705,390,"copper","coin_copper"],[835,390,"gold","coin_gold"]], blocks:[[665,423,42,52,"wood"],[800,423,42,52,"wood"],[650,370,220,20,"glass"]]},
+    {name:"Silver Stacker", birds:["gumlime","gumblue","gumcherry","jawbreaker"], mugs:[[680,392,"silver","coin_silver"],[780,338,"gold","coin_gold"],[875,392,"copper","coin_copper"]], blocks:[[640,425,40,48,"glass"],[740,365,40,105,"wood"],[835,425,40,48,"glass"],[620,395,275,20,"glass"],[700,315,150,20,"wood"]]},
+    {name:"Ruby Register", birds:["gumcherry","gumblue","gumgrape","gumlime"], mugs:[[730,386,"ruby","coin_ruby"],[830,386,"gold","coin_gold"]], blocks:[[690,422,45,56,"glass"],[790,422,45,56,"wood"],[675,362,180,20,"glass"],[745,315,70,20,"wood"]]},
+    {name:"Copper Causeway", birds:["gumgrape","gumlime","gumblue","jawbreaker"], mugs:[[635,398,"copper","coin_copper"],[770,398,"silver","coin_silver"],[890,360,"emerald","coin_emerald"]], blocks:[[600,428,42,45,"glass"],[735,428,42,45,"wood"],[858,390,42,82,"glass"],[582,392,325,20,"glass"],[690,335,195,20,"wood"]]},
+    {name:"Bubble Bank", birds:["gumblue","gumcherry","gumgrape","gumlime"], mugs:[[705,392,"gold","coin_gold"],[795,392,"ruby","coin_ruby"],[875,392,"silver","coin_silver"]], blocks:[[655,424,48,50,"wood"],[740,424,48,50,"glass"],[825,424,48,50,"wood"],[628,378,280,20,"glass"],[700,320,172,20,"wood"]]},
+    {name:"Emerald Elevator", birds:["gumlime","jawbreaker","gumblue","gumcherry","gumgrape"], mugs:[[660,396,"emerald","coin_emerald"],[810,396,"copper","coin_copper"],[892,344,"gold","coin_gold"]], blocks:[[620,427,45,50,"glass"],[770,427,45,50,"wood"],[862,376,45,100,"glass"],[600,396,325,20,"glass"],[680,334,220,20,"wood"],[845,292,65,20,"glass"]]},
+    {name:"Coin Fountain", birds:["gumgrape","gumcherry","gumblue","gumlime","jawbreaker"], mugs:[[620,399,"silver","coin_silver"],[735,350,"ruby","coin_ruby"],[850,399,"gold","coin_gold"],[905,350,"emerald","coin_emerald"]], blocks:[[585,430,42,42,"glass"],[700,382,42,90,"wood"],[815,430,42,42,"glass"],[875,382,42,90,"wood"],[565,405,360,20,"glass"],[650,330,280,20,"wood"]]},
+    {name:"Mint Moneyworks", birds:["jawbreaker","gumlime","gumgrape","gumcherry","gumblue"], mugs:[[640,392,"copper","coin_copper"],[735,332,"gold","coin_gold"],[830,392,"silver","coin_silver"],[900,332,"ruby","coin_ruby"]], blocks:[[600,425,42,50,"stone"],[695,364,42,108,"glass"],[790,425,42,50,"wood"],[868,364,42,108,"glass"],[580,397,342,20,"glass"],[652,322,275,20,"wood"],[725,276,130,20,"glass"]]},
+    {name:"Final Jackpot", birds:["jawbreaker","gumcherry","gumlime","gumgrape","gumblue","gumblue"], mugs:[[610,392,"gold","coin_gold"],[705,335,"emerald","coin_emerald"],[790,392,"ruby","coin_ruby"],[870,335,"silver","coin_silver"],[915,392,"copper","coin_copper"]], blocks:[[575,425,40,50,"glass"],[670,365,40,110,"wood"],[755,425,40,50,"glass"],[835,365,40,110,"wood"],[890,425,40,50,"glass"],[560,397,370,20,"glass"],[620,335,310,20,"wood"],[700,285,210,20,"glass"],[760,242,88,20,"wood"]]}
+  ];
+
+  const iceCreamCatapultLevels = [
+    {name:"Freezer Alley", birds:["popcherry","popblue","poporange"], mugs:[[720,390,"milkshake","cat_tabby"],[825,390,"catnip","cat_black"]], blocks:[[690,420,42,55,"glass"],[790,420,42,55,"wood"],[680,365,172,20,"glass"]]},
+    {name:"Tabby Tubs", birds:["popblue","popcherry","popgrape"], mugs:[[705,390,"cherryice","cat_calico"],[840,390,"milkshake","cat_tabby"]], blocks:[[665,423,42,52,"wood"],[805,423,42,52,"glass"],[650,370,225,20,"glass"]]},
+    {name:"Calico Cone", birds:["poporange","popblue","poprainbow","popcherry"], mugs:[[680,392,"orangecream","cat_calico"],[780,338,"catnip","cat_siamese"],[875,392,"blueice","cat_black"]], blocks:[[640,425,40,48,"glass"],[740,365,40,105,"wood"],[835,425,40,48,"glass"],[620,395,275,20,"glass"],[700,315,150,20,"wood"]]},
+    {name:"Siamese Scoop", birds:["popgrape","popcherry","popblue","poporange"], mugs:[[730,386,"grapeice","cat_siamese"],[830,386,"milkshake","cat_tabby"]], blocks:[[690,422,45,56,"glass"],[790,422,45,56,"wood"],[675,362,180,20,"glass"],[745,315,70,20,"wood"]]},
+    {name:"Kitty Cream Bridge", birds:["poprainbow","popblue","poporange","popcherry"], mugs:[[635,398,"rainbowice","cat_icecream"],[770,398,"catnip","cat_black"],[890,360,"milkshake","cat_calico"]], blocks:[[600,428,42,45,"glass"],[735,428,42,45,"wood"],[858,390,42,82,"glass"],[582,392,325,20,"glass"],[690,335,195,20,"wood"]]},
+    {name:"Pawprint Parlor", birds:["popcherry","popgrape","popblue","poporange"], mugs:[[705,392,"cherryice","cat_tabby"],[795,392,"blueice","cat_black"],[875,392,"orangecream","cat_siamese"]], blocks:[[655,424,48,50,"wood"],[740,424,48,50,"glass"],[825,424,48,50,"wood"],[628,378,280,20,"glass"],[700,320,172,20,"wood"]]},
+    {name:"Sprinkle Scratcher", birds:["popblue","poprainbow","popcherry","popgrape","poporange"], mugs:[[660,396,"milkshake","cat_icecream"],[810,396,"catnip","cat_calico"],[892,344,"grapeice","cat_black"]], blocks:[[620,427,45,50,"glass"],[770,427,45,50,"wood"],[862,376,45,100,"glass"],[600,396,325,20,"glass"],[680,334,220,20,"wood"],[845,292,65,20,"glass"]]},
+    {name:"Meow Mixer", birds:["poporange","popblue","poprainbow","popcherry","popgrape"], mugs:[[620,399,"orangecream","cat_tabby"],[735,350,"blueice","cat_siamese"],[850,399,"milkshake","cat_black"],[905,350,"catnip","cat_calico"]], blocks:[[585,430,42,42,"glass"],[700,382,42,90,"wood"],[815,430,42,42,"glass"],[875,382,42,90,"wood"],[565,405,360,20,"glass"],[650,330,280,20,"wood"]]},
+    {name:"Frosted Fur Keep", birds:["popblue","poporange","popgrape","poprainbow","popcherry"], mugs:[[640,392,"blueice","cat_icecream"],[735,332,"milkshake","cat_tabby"],[830,392,"catnip","cat_black"],[900,332,"rainbowice","cat_siamese"]], blocks:[[600,425,42,50,"stone"],[695,364,42,108,"glass"],[790,425,42,50,"wood"],[868,364,42,108,"glass"],[580,397,342,20,"glass"],[652,322,275,20,"wood"],[725,276,130,20,"glass"]]},
+    {name:"Final Catapult", birds:["poprainbow","popblue","poporange","popgrape","popcherry","popcherry"], mugs:[[610,392,"milkshake","cat_tabby"],[705,335,"blueice","cat_black"],[790,392,"orangecream","cat_calico"],[870,335,"catnip","cat_siamese"],[915,392,"rainbowice","cat_icecream"]], blocks:[[575,425,40,50,"glass"],[670,365,40,110,"wood"],[755,425,40,50,"glass"],[835,365,40,110,"wood"],[890,425,40,50,"glass"],[560,397,370,20,"glass"],[620,335,310,20,"wood"],[700,285,210,20,"glass"],[760,242,88,20,"wood"]]}
+  ];
+
+  const episodes = [
+    {title:"Gingerbread Grove", short:"Gingerbreads vs sweet-liquid mugs", blurb:"Launch gingerbread men, smash sweet-liquid mugs, and flood the board with swishy pools.", levels, targetPlural:"Mugs"},
+    {title:"Marshmallow Mayhem", short:"Marshmallows vs chocolate bars", blurb:"Easier layouts: marshmallows can pop chocolate bars without huge towers blocking every shot.", levels:marshmallowLevels, targetPlural:"Bars"},
+    {title:"Peppermint Pop-Off", short:"Candy canes vs soda bottles", blurb:"New candy-cane launchers crack fizzy soda bottles and splash cola, grape, orange, lime, and root beer across the board.", levels:peppermintLevels, targetPlural:"Bottles"},
+    {title:"Gumball Gold Rush", short:"Gumballs vs greedy coins", blurb:"Springy gumballs bounce, split, stick, and jawbreak their way through cranky coin forts.", levels:gumballLevels, targetPlural:"Coins"},
+    {title:"Ice Cream Catapult", short:"Popsicles vs freezer cats", blurb:"Popsicle launchers freeze, drill, splash, and arc over towers to knock out angry dessert cats.", levels:iceCreamCatapultLevels, targetPlural:"Cats"}
+  ];
+
+  let state = {
+    episode: 0, menuEpisode: 0, menuLevel: 0, level: 0, completed: episodes.map(ep => Array(ep.levels.length).fill(false)), birds: [], current: null, queueIndex: 0,
+    blocks: [], mugs: [], water: [], poolBuckets: [], shards: [], shots: 0, score: 0, dragging: false, ready: true,
+    aimingX: 0, aimingY: 0, abilityUsed: false, powerUsed: false, eagle: null, started: false, musicOn: true, wonTimer: 0, messageTimer: 0
+  };
+  const sling = {x:155,y:386};
+
+  function play(name, vol=1) {
+    const el = audio[name];
+    if (!el) return synthFallback(name);
+    try { el.currentTime = 0; el.volume = clamp(vol,0,1); const p = el.play(); if (p && p.catch) p.catch(()=>synthFallback(name)); } catch { synthFallback(name); }
+  }
+  let ac;
+  function synthFallback(name) {
+    try {
+      ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+      const o = ac.createOscillator(), g = ac.createGain();
+      const now = ac.currentTime; o.connect(g); g.connect(ac.destination);
+      const f = name === "shatter" ? 980 : name === "splash" ? 120 : name === "win" ? 660 : name === "launch" ? 360 : 160;
+      o.frequency.setValueAtTime(f, now); o.frequency.exponentialRampToValueAtTime(Math.max(60,f*.45), now+.28);
+      g.gain.setValueAtTime(.16, now); g.gain.exponentialRampToValueAtTime(.001, now+.35); o.start(now); o.stop(now+.36);
+    } catch {}
+  }
+  function setMessage(txt, seconds=2.2) { ui.msg.textContent = txt; state.messageTimer = seconds; }
+
+  function newBird(type, x=sling.x, y=sling.y) {
+    const def = birdDefs[type] || birdDefs.classic;
+    return {kind:"bird", type, x, y, vx:0, vy:0, r:def.r, baseR:def.r, mass:def.mass, baseMass:def.mass, launched:false, asleep:false, dead:false, ability:false, powerMode:"", powerTime:0, spin:0, rot:0, sprite:def.sprite, trail:[], wetness:0};
+  }
+  function newBlock(x,y,w,h,type) {
+    const d = blockDefs[type];
+    return {kind:"block", x,y,w,h,type, vx:0, vy:0, hp:d.hp, mass:d.mass, bounce:d.bounce, friction:d.friction, awake:false, angle:0, av:0, dead:false};
+  }
+  function newMug(x,y,liquid,style) {
+    const sprite = targetSprite[style] || mugSprite[liquid] || targetSprite.milkbar;
+    const isBar = !!targetSprite[style];
+    return {kind:"mug", targetStyle:style || liquid, isBar, x,y, r:isBar?28:25, liquid, vx:0, vy:0, hp:isBar?72:65, mass:isBar?1.35:1.2, awake:false, dead:false, wobble:0, sprite};
+  }
+  function clearLooseBirds() {
+    // Remove any launched, split, asleep, or leftover characters so restarts never leave ghosts on the board.
+    if (state.current && (state.current.launched || state.current.asleep)) state.current.dead = true;
+    for (const b of extraBirds) if (b) b.dead = true;
+    extraBirds.length = 0;
+  }
+  function restartLevel() {
+    clearLooseBirds();
+    loadLevel(state.level);
+  }
+  function loadLevel(i) {
+    clearLooseBirds();
+    const ep = episodes[state.episode];
+    state.level = (i + ep.levels.length) % ep.levels.length; const L = ep.levels[state.level];
+    state.birds = L.birds.slice(); state.queueIndex = 0; state.current = newBird(state.birds[0]); state.blocks = L.blocks.map(b=>newBlock(...b));
+    state.mugs = L.mugs.map(m=>newMug(...m)); state.water = []; state.poolBuckets=[]; state.shards=[]; state.shots=0; state.ready=true; state.dragging=false; state.abilityUsed=false; state.powerUsed=false; state.eagle=null; state.wonTimer=0;
+    if (ui.eagle) { ui.eagle.classList.remove("used"); ui.eagle.disabled = false; }
+    setMessage(ep.title + " · " + L.name,1.8); updateButtons(); updateStatus();
+  }
+  function nextBird() {
+    state.queueIndex++;
+    if (state.queueIndex < state.birds.length) {
+      state.current = newBird(state.birds[state.queueIndex]); state.ready = true; state.abilityUsed = false;
+      const type=state.birds[state.queueIndex]; setMessage(birdDefs[type].name + " · " + birdDefs[type].ability, 1.9);
+    } else { state.current = null; state.ready = false; }
+    updateStatus();
+  }
+  function updateStatus() {
+    const left = state.mugs.filter(m=>!m.dead).length;
+    const ep = episodes[state.episode];
+    ui.status.textContent = `${ep.title} · Level ${state.level+1}/${ep.levels.length} · Shots ${state.shots} · ${ep.targetPlural} ${left}`;
+    if (ui.ability) {
+      const b = state.current, def = b && birdDefs[b.type];
+      ui.ability.textContent = def ? `Ability: ${def.name}` : "Ability";
+      ui.ability.classList.toggle("used", !!(b && b.ability));
+    }
+  }
+  function updateButtons() {
+    ui.levelButtons.innerHTML="";
+    const ep = episodes[state.episode];
+    for (let i=0;i<ep.levels.length;i++) {
+      const b=document.createElement("button"); b.textContent=i+1; b.className="panel"+(state.completed[state.episode][i]?" done":"")+(i===state.level?" active":"");
+      b.onclick=()=>loadLevel(i); ui.levelButtons.appendChild(b);
+    }
+    renderMenu();
+  }
+
+
+  function renderMenu() {
+    if (!ui.episodeCards || !ui.menuLevelGrid) return;
+    ui.episodeCards.innerHTML = "";
+    episodes.forEach((ep, idx) => {
+      const card = document.createElement("button");
+      card.type = "button";
+      card.className = "episodeCard" + (idx === state.menuEpisode ? " active" : "");
+      card.innerHTML = `<strong>${ep.title}</strong><span>${ep.short}</span><span>${state.completed[idx].filter(Boolean).length}/${ep.levels.length} cleared</span>`;
+      card.onclick = () => { state.menuEpisode = idx; state.menuLevel = 0; renderMenu(); };
+      ui.episodeCards.appendChild(card);
+    });
+    const ep = episodes[state.menuEpisode];
+    ui.episodeBlurb.textContent = ep.blurb;
+    ui.menuLevelGrid.innerHTML = "";
+    for (let i=0;i<ep.levels.length;i++) {
+      const b = document.createElement("button");
+      b.className = "panel" + (state.completed[state.menuEpisode][i] ? " done" : "") + (i === state.menuLevel ? " active" : "");
+      b.textContent = i + 1;
+      b.title = ep.levels[i].name;
+      b.onclick = () => { state.menuLevel = i; startFromMenu(i); };
+      ui.menuLevelGrid.appendChild(b);
+    }
+  }
+  async function startFromMenu(levelIndex=0) {
+    state.episode = state.menuEpisode;
+    state.started = true; ui.overlay.style.display="none";
+    try { audio.bgm.volume=.38; if (state.musicOn) await audio.bgm.play(); } catch {}
+    loadLevel(levelIndex);
+  }
+  function showMenu() {
+    state.started = false;
+    state.dragging = false;
+    ui.overlay.style.display="flex";
+    state.menuEpisode = state.episode;
+    state.menuLevel = state.level || 0;
+    renderMenu();
+  }
+
+
+  function canvasPoint(ev) {
+    const r=canvas.getBoundingClientRect();
+    const t = ev.touches ? ev.touches[0] : ev;
+    return {x:(t.clientX-r.left)*W/r.width, y:(t.clientY-r.top)*H/r.height};
+  }
+  function pointerDown(ev) {
+    ev.preventDefault(); const p=canvasPoint(ev);
+    if (state.current && !state.current.launched && len(p.x-sling.x,p.y-sling.y) < 72) {
+      state.dragging = true; state.aimingX = p.x; state.aimingY = p.y;
+    } else if (state.current && state.current.launched) activateAbility();
+  }
+  function pointerMove(ev) {
+    if (!state.dragging) return; ev.preventDefault(); const p=canvasPoint(ev);
+    const dx=p.x-sling.x, dy=p.y-sling.y, l=len(dx,dy), max=148, k=l>max?max/l:1;
+    state.aimingX=sling.x+dx*k; state.aimingY=sling.y+dy*k;
+    state.current.x=state.aimingX; state.current.y=state.aimingY;
+  }
+  function pointerUp(ev) {
+    if (!state.dragging || !state.current) return; ev.preventDefault();
+    const b=state.current; const dx=sling.x-b.x, dy=sling.y-b.y; const power=7.15;
+    if (len(dx,dy)>10) { b.vx=dx*power; b.vy=dy*power; b.launched=true; b.awake=true; state.ready=false; state.dragging=false; state.shots++; play("launch",.55); updateStatus(); }
+    else { b.x=sling.x; b.y=sling.y; state.dragging=false; }
+  }
+  canvas.addEventListener("mousedown", pointerDown); canvas.addEventListener("mousemove", pointerMove); window.addEventListener("mouseup", pointerUp);
+  canvas.addEventListener("touchstart", pointerDown, {passive:false}); canvas.addEventListener("touchmove", pointerMove, {passive:false}); window.addEventListener("touchend", pointerUp, {passive:false});
+  window.addEventListener("keydown", e=>{ if(e.code==="Space") activateAbility(); if(e.key.toLowerCase()==="r") restartLevel(); });
+
+  function splitFrom(b, type, offsets, scale=.78, massScale=.62, speedScale=.96) {
+    const speed = Math.max(220, len(b.vx,b.vy));
+    const base = Math.atan2(b.vy,b.vx);
+    const clones=[];
+    for (const off of offsets) {
+      const c = newBird(type, b.x, b.y); c.launched=true; c.awake=true; c.ability=true; c.r=Math.max(14, b.baseR*scale); c.baseR=c.r; c.mass=b.baseMass*massScale; c.baseMass=c.mass; c.powerMode="mini"; c.powerTime=.85;
+      const a = base + off; c.vx=Math.cos(a)*speed*speedScale; c.vy=Math.sin(a)*speed*speedScale;
+      clones.push(c);
+    }
+    extraBirds.push(...clones);
+    return clones;
+  }
+  function icySlow(x,y,r) {
+    for (const o of [...state.blocks, ...state.mugs]) {
+      if (!o || o.dead) continue;
+      const ox = o.kind === "block" ? o.x + o.w/2 : o.x, oy = o.kind === "block" ? o.y + o.h/2 : o.y;
+      if (len(ox-x,oy-y) < r) { o.vx *= .35; o.vy *= .45; o.awake = true; damage(o, o.kind === "mug" ? 16 : 10, x, y); }
+    }
+    for (const p of state.water) if (len(p.x-x,p.y-y)<r) { p.vx *= .28; p.vy *= .28; p.foam = true; }
+  }
+  function meltChocolate(x,y,r) {
+    for (const m of state.mugs) if (!m.dead && stickyLiquids.has(m.liquid) && len(m.x-x,m.y-y)<r) damage(m,28,x,y);
+    for (const p of state.water) if (stickyLiquids.has(p.liquid) && len(p.x-x,p.y-y)<r) { p.vx *= 1.35; p.vy -= 45; p.foam=true; }
+  }
+  function gumSlow(x,y,r) {
+    for (const o of [...state.blocks, ...state.mugs]) {
+      if (!o || o.dead) continue;
+      const ox = o.kind === "block" ? o.x + o.w/2 : o.x, oy = o.kind === "block" ? o.y + o.h/2 : o.y;
+      if (len(ox-x,oy-y) < r) { o.vx *= .45; o.vy *= .62; o.awake = true; damage(o, o.kind === "mug" ? 18 : 11, x, y); }
+    }
+    for (const p of state.water) if (len(p.x-x,p.y-y)<r) { p.vx *= .48; p.vy *= .7; p.foam = true; }
+  }
+  function iceCreamSplash(x,y,r) {
+    for (const o of [...state.blocks, ...state.mugs]) {
+      if (!o || o.dead) continue;
+      const ox = o.kind === "block" ? o.x + o.w/2 : o.x, oy = o.kind === "block" ? o.y + o.h/2 : o.y;
+      if (len(ox-x,oy-y) < r) { o.vx *= .68; o.vy -= 70; o.awake = true; damage(o, o.kind === "mug" ? 20 : 12, x, y); }
+    }
+    for (let i=0;i<22;i++) state.water.push({x:x+rand(-10,10),y:y+rand(-8,8),vx:rand(-160,160),vy:rand(-170,-20),r:rand(3,6),color:Math.random()<.5?"#c9f6ff":"#ffe5f0",liquid:Math.random()<.5?"blueice":"milkshake",life:17,age:0,foam:true});
+  }
+
+  function birdDamageScale(b) {
+    if (!b) return 1;
+    if (b.powerMode === "crusher") return 2.15;
+    if (b.powerMode === "drill") return 1.75;
+    if (b.powerMode === "peppermint") return 1.55;
+    if (b.powerMode === "hot") return 1.65;
+    if (b.powerMode === "hook") return 1.9;
+    if (b.powerMode === "jaw") return 2.25;
+    if (b.powerMode === "bounce") return 1.55;
+    if (b.powerMode === "sticky") return 1.35;
+    if (b.powerMode === "ice") return 1.45;
+    if (b.powerMode === "cream") return 1.7;
+    if (b.powerMode === "mini") return .78;
+    return 1;
+  }
+  function activateAbility() {
+    const b=state.current; if (!b || !b.launched || b.ability) return;
+    b.ability = true; state.abilityUsed = true;
+    if (b.type === "classic") {
+      b.vx *= 1.55; b.vy *= .72; b.spin = 16; b.powerMode="kick"; b.powerTime=.55;
+      shockwave(b.x,b.y,58,210); play("launch",.4); setMessage("Classic Snap second wind!",1.1);
+    } else if (b.type === "frosted") {
+      splitFrom(b,"frosted",[-.46,.46],.78,.62,.96); b.r=19; b.mass=.62; b.vx*=.98; b.vy*=.98; b.powerMode="mini"; b.powerTime=.9;
+      play("splash",.45); setMessage("Frosted split into three!",1.1);
+    } else if (b.type === "molasses") {
+      b.mass = b.baseMass*1.9; b.r = b.baseR+5; b.vx *= 1.10; b.vy += 95; b.powerMode="crusher"; b.powerTime=1.25;
+      shockwave(b.x,b.y,82,320); play("hit",.5); setMessage("Molasses crusher!",1.1);
+    } else if (b.type === "snapper") {
+      shockwave(b.x,b.y,175,650); b.powerMode="blast"; b.powerTime=.25; b.vx*=.55; b.vy*=.55;
+      for (const o of [...state.blocks,...state.mugs]) { const ox=o.kind==="block"?o.x+o.w/2:o.x, oy=o.kind==="block"?o.y+o.h/2:o.y; if(!o.dead && len(ox-b.x,oy-b.y)<168) damage(o,o.kind==="mug"?38:30,b.x,b.y); }
+      play("shatter",.58); setMessage("Ginger snap explosion!",1.1);
+    } else if (b.type === "mallow") {
+      b.r = b.baseR+8; b.mass = b.baseMass*.82; b.vy -= 285; b.vx *= 1.08; b.powerMode="float"; b.powerTime=1.65;
+      play("launch",.35); setMessage("Pillow Mallow inflated!",1.1);
+    } else if (b.type === "toasted") {
+      b.mass = b.baseMass*1.55; b.vx *= 1.22; b.vy -= 20; b.powerMode="hot"; b.powerTime=1.25;
+      shockwave(b.x,b.y,70,260); meltChocolate(b.x,b.y,135); play("hit",.45); setMessage("Toasted hot shove!",1.1);
+    } else if (b.type === "strawberry") {
+      splitFrom(b,"strawberry",[-.38,.38],.75,.57,.98); b.r=18; b.mass=.54; b.powerMode="mini"; b.powerTime=1;
+      play("splash",.45); setMessage("Strawberry puff split!",1.1);
+    } else if (b.type === "twist") {
+      b.vx *= 1.58; b.vy *= .72; b.spin = 36; b.powerMode="drill"; b.powerTime=1.05;
+      shockwave(b.x,b.y,76,270); play("launch",.45); setMessage("Twist drill dash!",1.1);
+    } else if (b.type === "mint") {
+      shockwave(b.x,b.y,145,430); icySlow(b.x,b.y,155); b.powerMode="cool"; b.powerTime=.6;
+      play("splash",.48); setMessage("Mint freeze puff!",1.1);
+    } else if (b.type === "cane") {
+      b.vx *= 1.46; b.vy *= .82; b.spin = 22; b.powerMode="peppermint"; b.powerTime=.9;
+      shockwave(b.x,b.y,78,260); play("launch",.42); setMessage("Peppermint kick!",1.1);
+    } else if (b.type === "peppermint") {
+      b.spin = 40; b.powerMode="peppermint"; b.powerTime=1.15; shockwave(b.x,b.y,150,500); b.vx *= .92; b.vy *= .92;
+      play("shatter",.45); setMessage("Peppermint spin burst!",1.1);
+    } else if (b.type === "licorice") {
+      b.mass = b.baseMass*1.75; b.r = b.baseR+4; b.vx *= 1.08; b.vy += 210; b.powerMode="hook"; b.powerTime=1.2;
+      shockwave(b.x,b.y,68,220); play("hit",.45); setMessage("Licorice hook smash!",1.1);
+    } else if (b.type === "spearmint") {
+      splitFrom(b,"spearmint",[-.34,.34],.76,.58,1.02); b.r=17; b.mass=.56; b.vx*=1.05; b.powerMode="mini"; b.powerTime=.95;
+      play("splash",.42); setMessage("Spearmint split!",1.1);
+    } else if (b.type === "ribbon") {
+      b.vx *= 1.18; b.vy -= 205; b.spin = 24; b.powerMode="curl"; b.powerTime=1.45;
+      shockwave(b.x,b.y,90,260); play("launch",.38); setMessage("Ribbon curl shot!",1.1);
+    } else if (b.type === "gumblue") {
+      b.vx *= 1.62; b.vy *= .74; b.spin = 26; b.powerMode="bounce"; b.powerTime=1.0;
+      shockwave(b.x,b.y,74,280); play("launch",.45); setMessage("Blue Gumball rebound!",1.1);
+    } else if (b.type === "gumcherry") {
+      shockwave(b.x,b.y,155,560); b.powerMode="pop"; b.powerTime=.35; b.vx*=.7; b.vy*=.7;
+      for (const o of [...state.blocks,...state.mugs]) { const ox=o.kind==="block"?o.x+o.w/2:o.x, oy=o.kind==="block"?o.y+o.h/2:o.y; if(!o.dead && len(ox-b.x,oy-b.y)<150) damage(o,o.kind==="mug"?36:28,b.x,b.y); }
+      play("shatter",.5); setMessage("Cherry gumball POP!",1.1);
+    } else if (b.type === "gumlime") {
+      splitFrom(b,"gumlime",[-.42,.42],.74,.56,1.04); b.r=17; b.mass=.54; b.vx*=1.05; b.powerMode="mini"; b.powerTime=.95;
+      play("splash",.42); setMessage("Lime gumdrop split!",1.1);
+    } else if (b.type === "gumgrape") {
+      b.mass = b.baseMass*1.35; b.vx*=1.05; b.vy-=35; b.powerMode="sticky"; b.powerTime=1.5;
+      shockwave(b.x,b.y,85,220); gumSlow(b.x,b.y,165); play("splash",.5); setMessage("Grape goo slowdown!",1.1);
+    } else if (b.type === "jawbreaker") {
+      b.mass = b.baseMass*2.05; b.r = b.baseR+5; b.vx *= 1.08; b.vy += 140; b.powerMode="jaw"; b.powerTime=1.25;
+      shockwave(b.x,b.y,92,360); play("hit",.55); setMessage("Jawbreaker smash!",1.1);
+    } else if (b.type === "popcherry") {
+      b.vx *= 1.58; b.vy *= .77; b.spin = 20; b.powerMode="kick"; b.powerTime=.75;
+      iceCreamSplash(b.x,b.y,78); play("launch",.42); setMessage("Cherry Popstick rocket!",1.1);
+    } else if (b.type === "popblue") {
+      shockwave(b.x,b.y,145,440); icySlow(b.x,b.y,170); b.powerMode="ice"; b.powerTime=.9;
+      iceCreamSplash(b.x,b.y,105); play("splash",.5); setMessage("Blue Ice Pop freeze!",1.1);
+    } else if (b.type === "poporange") {
+      b.mass = b.baseMass*1.55; b.vx *= 1.2; b.vy -= 35; b.powerMode="cream"; b.powerTime=1.1;
+      shockwave(b.x,b.y,100,315); iceCreamSplash(b.x,b.y,118); play("hit",.45); setMessage("Orange cream shove!",1.1);
+    } else if (b.type === "popgrape") {
+      b.vx *= 1.5; b.vy *= .72; b.spin = 34; b.powerMode="drill"; b.powerTime=1.05;
+      shockwave(b.x,b.y,82,290); play("launch",.45); setMessage("Grape bite drill!",1.1);
+    } else if (b.type === "poprainbow") {
+      b.vx *= 1.18; b.vy -= 230; b.spin = 24; b.powerMode="curl"; b.powerTime=1.5;
+      iceCreamSplash(b.x,b.y,130); play("launch",.4); setMessage("Rainbow pop arc!",1.1);
+    } else {
+      b.vx *= 1.22; b.vy *= .86; b.powerMode="kick"; b.powerTime=.55; play("launch",.35); setMessage("Sugar kick!",1.1);
+    }
+  }
+  function mightyTreatBoardWipe() {
+    // A true Mighty Eagle-style clear: every target and structure is destroyed immediately.
+    shockwave(W/2, 250, 760, 780);
+    for (const bl of state.blocks) if (!bl.dead) breakBlock(bl);
+    for (const m of state.mugs) if (!m.dead) breakMug(m, m.x, m.y);
+    for (let i=0;i<58;i++) state.shards.push({x:rand(220,920),y:rand(95,380),vx:rand(-330,330),vy:rand(-360,120),life:rand(.5,1.2),size:rand(3,9),color:Math.random()<.5?"#fff0a6":"#ffb45e"});
+    updateStatus();
+  }
+  function triggerMighty() {
+    if (!state.started || state.powerUsed) return;
+    state.powerUsed = true;
+    state.eagle = {x:-130, y:154, vx:820, life:1.85, tick:0, flap:0};
+    mightyTreatBoardWipe();
+    if (ui.eagle) { ui.eagle.classList.add("used"); ui.eagle.disabled = true; }
+    play("launch",.6); play("shatter",.7); play("splash",.55); setMessage("Mighty Treat wiped the board!",1.6);
+  }
+  ui.ability.onclick = activateAbility;
+  ui.eagle.onclick = triggerMighty;
+  ui.menuBtn.onclick = showMenu;
+  ui.restart.onclick = restartLevel;
+  ui.music.onclick = async () => {
+    state.musicOn = !state.musicOn;
+    ui.music.textContent = state.musicOn ? "Music On" : "Music Off";
+    if (state.musicOn) { try { audio.bgm.volume=.38; await audio.bgm.play(); } catch {} } else { audio.bgm.pause(); }
+  };
+  ui.playBtn.onclick = () => startFromMenu(state.menuLevel || 0);
+
+  let extraBirds = [];
+  function allBirds() { return [state.current, ...extraBirds].filter(b=>b && !b.dead); }
+  function shockwave(x,y,r,force) {
+    for (const o of [...state.blocks, ...state.mugs, ...allBirds()]) {
+      if (!o || o.dead) continue;
+      const ox = o.kind === "block" ? o.x + o.w/2 : o.x, oy = o.kind === "block" ? o.y + o.h/2 : o.y;
+      const d = len(ox-x, oy-y); if (d < r && d > 1) {
+        const k = (1-d/r)*force/(o.mass||1); o.vx += (ox-x)/d*k; o.vy += (oy-y)/d*k; o.awake=true;
+        if (o.kind === "mug" || o.kind === "block") damage(o,k*.14,x,y);
+      }
+    }
+    for (let i=0;i<26;i++) state.shards.push({x,y,vx:rand(-260,260),vy:rand(-280,90),life:rand(.35,.8),size:rand(2,6),color:"#fff0a6"});
+  }
+
+  function circleRectCollision(c, r) {
+    const nx = clamp(c.x, r.x, r.x+r.w), ny = clamp(c.y, r.y, r.y+r.h);
+    const dx=c.x-nx, dy=c.y-ny, dist=Math.hypot(dx,dy);
+    if (dist < c.r) return {dx,dy,dist,nx,ny,over:c.r-dist};
+    return null;
+  }
+  function damage(o, amount, x, y) {
+    if (!o || o.dead) return;
+    o.hp -= amount;
+    if (amount > 9) play("hit", clamp(amount/100, .15, .7));
+    if (o.kind === "mug" && (o.hp <= 0 || amount > 38)) breakMug(o, x || o.x, y || o.y);
+    if (o.kind === "block" && o.hp <= 0) breakBlock(o);
+  }
+  function breakBlock(b) {
+    b.dead = true; play("hit",.45);
+    const colors={wood:"#8f5127",glass:"#b8f5ff",stone:"#8d8d94"};
+    for (let i=0;i<12;i++) state.shards.push({x:b.x+b.w/2,y:b.y+b.h/2,vx:rand(-180,180),vy:rand(-180,40),life:rand(.45,1),size:rand(3,9),color:colors[b.type]});
+  }
+  function breakMug(m, hx, hy) {
+    if (m.dead) return; m.dead=true; play("shatter",.62); play("splash",.38);
+    const color=liquidColors[m.liquid] || "#87d8ff";
+    for (let i=0;i<82;i++) {
+      const a=rand(0,Math.PI*2), sp=rand(20,280);
+      const trait = liquidTrait(m.liquid);
+      state.water.push({x:m.x+rand(-12,12),y:m.y+rand(-14,18),vx:(Math.cos(a)*sp + m.vx*.4)*trait.push,vy:Math.sin(a)*sp*.55 - rand(40,160) - (trait.soda?rand(20,90):0),r:rand(3.1,5.8),color,liquid:m.liquid,life:20,age:0,foam:Math.random()<(trait.soda?.28:.14)});
+    }
+    for (let i=0;i<18;i++) state.shards.push({x:m.x+rand(-8,8),y:m.y+rand(-10,10),vx:rand(-240,240),vy:rand(-245,40),life:rand(.55,1.15),size:rand(3,9),color:m.isBar?"#4a2115":"#eef3ff"});
+    updateStatus();
+  }
+
+  function step(dt) {
+    if (!state.started) return;
+    state.messageTimer -= dt; if (state.messageTimer <= 0) ui.msg.textContent="";
+    const gravity = 730;
+    for (const b of allBirds()) {
+      if (!b.launched) continue;
+      b.trail.push({x:b.x,y:b.y}); if (b.trail.length>12) b.trail.shift();
+      b.vy += gravity*dt;
+      if (b.powerTime > 0) {
+        b.powerTime -= dt;
+        if (b.powerMode === "float" || b.powerMode === "curl") b.vy -= 390*dt;
+        if (b.powerMode === "curl") b.vx += Math.sin(performance.now()/90)*46*dt;
+        if (b.powerMode === "hook" || b.powerMode === "crusher") b.vy += 420*dt;
+        if (b.powerMode === "drill" || b.powerMode === "peppermint") b.rot += 34*dt;
+        if (b.powerMode === "hot") meltChocolate(b.x,b.y,58);
+        if (b.powerMode === "sticky") gumSlow(b.x,b.y,48);
+        if (b.powerMode === "ice") icySlow(b.x,b.y,54);
+        if (b.powerMode === "cream") iceCreamSplash(b.x,b.y,36);
+        if (b.powerMode === "bounce" && b.y+b.r>500) { b.vy -= 190*dt; b.vx *= 1.003; }
+        if (b.powerTime <= 0 && (b.powerMode === "float" || b.powerMode === "crusher" || b.powerMode === "hook" || b.powerMode === "jaw" || b.powerMode === "sticky")) { b.r=b.baseR; b.mass=b.baseMass; }
+      }
+      b.x += b.vx*dt; b.y += b.vy*dt; b.rot += b.vx*dt*.018;
+      if (b.y+b.r>506) { b.y=506-b.r; b.vy*=-.36; b.vx*=.72; if (Math.abs(b.vy)>85) play("hit",.18); }
+      if (b.x<-90 || b.x>1050 || b.y>650 || (Math.abs(b.vx)+Math.abs(b.vy)<18 && b.y>470)) b.asleep=true;
+    }
+    if (state.eagle) {
+      const e = state.eagle; e.life -= dt; e.tick -= dt; e.flap += dt*11; e.x += e.vx*dt; e.y = 155 + Math.sin(e.flap*.9)*38;
+      if (e.tick <= 0) {
+        e.tick = .075; shockwave(e.x,e.y,128,500);
+        for (const m of state.mugs) if (!m.dead && len(m.x-e.x,m.y-e.y)<105) damage(m,78,e.x,e.y);
+        for (const bl of state.blocks) if (!bl.dead && len((bl.x+bl.w/2)-e.x,(bl.y+bl.h/2)-e.y)<115) damage(bl,64,e.x,e.y);
+      }
+      if (e.x > W+180 || e.life <= 0) state.eagle = null;
+    }
+    for (const bl of state.blocks) {
+      if (bl.dead) continue;
+      if (bl.awake) { bl.vy += gravity*dt; bl.x += bl.vx*dt; bl.y += bl.vy*dt; bl.angle += bl.vx*dt*.004; }
+      if (bl.y+bl.h>506) { bl.y=506-bl.h; bl.vy*=-bl.bounce; bl.vx*=bl.friction; if(Math.abs(bl.vy)>130) damage(bl,Math.abs(bl.vy)*.035); }
+      if (bl.x<0) {bl.x=0; bl.vx=Math.abs(bl.vx)*.25;} if (bl.x+bl.w>960) {bl.x=960-bl.w; bl.vx=-Math.abs(bl.vx)*.25;}
+      if (Math.abs(bl.vx)+Math.abs(bl.vy)<7) { bl.vx*=.92; bl.vy*=.8; }
+    }
+    for (const m of state.mugs) {
+      if (m.dead) continue;
+      if (m.awake) { m.vy += gravity*dt; m.x += m.vx*dt; m.y += m.vy*dt; m.wobble += m.vx*dt*.05; }
+      if (m.y+m.r>506) { m.y=506-m.r; if(Math.abs(m.vy)>170) damage(m,Math.abs(m.vy)*.12); m.vy*=-.28; m.vx*=.74; }
+      if (m.x-m.r<0) {m.x=m.r; m.vx=Math.abs(m.vx)*.25;} if (m.x+m.r>960) {m.x=960-m.r; m.vx=-Math.abs(m.vx)*.25;}
+      if (m.y>590) breakMug(m,m.x,m.y);
+    }
+    solveCollisions(dt);
+    updateWater(dt);
+    updateShards(dt);
+    const activeBirds = allBirds().filter(b=>b.launched && !b.asleep);
+    if (state.current && state.current.launched && activeBirds.length===0) {
+      extraBirds.length=0; nextBird();
+    }
+    if (state.mugs.every(m=>m.dead)) {
+      if (state.wonTimer <= 0) { state.wonTimer = 2; state.completed[state.episode][state.level]=true; play("win",.65); setMessage(`Level ${state.level+1} cleared!`,2); updateButtons(); }
+      else { state.wonTimer -= dt; if (state.wonTimer <= 0) loadLevel(state.level+1); }
+    } else if (!state.current && activeBirds.length===0 && state.mugs.some(m=>!m.dead)) {
+      setMessage("Out of launchers. Press Restart.", .6);
+    }
+  }
+
+  function solveCollisions(dt) {
+    const birds=allBirds();
+    for (const b of birds) {
+      if (!b.launched) continue;
+      for (const bl of state.blocks) {
+        if (bl.dead) continue; const hit=circleRectCollision(b,bl); if (!hit) continue;
+        const nx= hit.dist>0 ? hit.dx/hit.dist : 0, ny= hit.dist>0 ? hit.dy/hit.dist : -1;
+        b.x += nx*hit.over*.7; b.y += ny*hit.over*.7;
+        const rel = (b.vx-bl.vx)*nx + (b.vy-bl.vy)*ny;
+        if (rel < 0) {
+          const imp = -(1.35)*rel/(1/b.mass + 1/bl.mass);
+          b.vx += nx*imp/b.mass; b.vy += ny*imp/b.mass; bl.vx -= nx*imp/bl.mass; bl.vy -= ny*imp/bl.mass; bl.awake=true;
+          damage(bl, Math.abs(imp)*.07*b.mass*birdDamageScale(b), b.x,b.y);
+        }
+      }
+      for (const m of state.mugs) {
+        if (m.dead) continue;
+        const dx=b.x-m.x, dy=b.y-m.y, d=len(dx,dy), rr=b.r+m.r;
+        if (d<rr && d>0) {
+          const nx=dx/d, ny=dy/d, over=rr-d; b.x+=nx*over*.55; b.y+=ny*over*.55; m.x-=nx*over*.45; m.y-=ny*over*.45;
+          const rel=(b.vx-m.vx)*nx+(b.vy-m.vy)*ny;
+          if (rel<0) { const imp=-(1.5)*rel/(1/b.mass+1/m.mass); b.vx+=nx*imp/b.mass; b.vy+=ny*imp/b.mass; m.vx-=nx*imp/m.mass; m.vy-=ny*imp/m.mass; m.awake=true; damage(m,Math.abs(imp)*.11*b.mass*birdDamageScale(b),b.x,b.y); }
+        }
+      }
+    }
+    // target/block supports and hits: top objects should rest instead of slowly crushing mugs/bars
+    for (const m of state.mugs) {
+      if (m.dead) continue;
+      for (const bl of state.blocks) {
+        if (bl.dead) continue; const hit=circleRectCollision(m,bl); if (!hit) continue;
+        const nx= hit.dist>0 ? hit.dx/hit.dist : 0, ny= hit.dist>0 ? hit.dy/hit.dist : -1;
+        const blockCenterX = bl.x + bl.w/2;
+        const topObjectResting = ny > .45 && bl.y + bl.h <= m.y + m.r*.32 && Math.abs(blockCenterX - m.x) < bl.w*.65 + m.r*.4;
+        if (topObjectResting) {
+          bl.y -= hit.over*.82; m.y += hit.over*.04;
+          const fallSpeed = bl.vy - m.vy;
+          if (fallSpeed < 330) {
+            bl.vy = Math.min(bl.vy*.08, m.vy*.15);
+            bl.vx *= .92; m.vx += bl.vx*.015; bl.awake = true;
+            continue;
+          }
+        }
+        m.x += nx*hit.over*.55; m.y += ny*hit.over*.55;
+        const rel=(m.vx-bl.vx)*nx+(m.vy-bl.vy)*ny;
+        if (rel<0) { const imp=-(1.2)*rel/(1/m.mass+1/bl.mass); m.vx+=nx*imp/m.mass; m.vy+=ny*imp/m.mass; bl.vx-=nx*imp/bl.mass; bl.vy-=ny*imp/bl.mass; m.awake=bl.awake=true; const crushScale=topObjectResting?.015:.05; damage(m,Math.abs(imp)*crushScale); damage(bl,Math.abs(imp)*.03); }
+      }
+    }
+    // cheap rect stacking
+    for (let i=0;i<state.blocks.length;i++) for (let j=i+1;j<state.blocks.length;j++) {
+      const a=state.blocks[i], b=state.blocks[j]; if(a.dead||b.dead) continue;
+      if (a.x<a.x+a.w && a.x+b.w>b.x && a.y<a.y+a.h && a.y+b.h>b.y) {}
+      if (a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.h && a.y+a.h > b.y) {
+        const ox=Math.min(a.x+a.w-b.x, b.x+b.w-a.x), oy=Math.min(a.y+a.h-b.y, b.y+b.h-a.y);
+        if (ox<oy) { const sx=(a.x+a.w/2 < b.x+b.w/2)?-1:1; a.x+=sx*ox*.5; b.x-=sx*ox*.5; const v=(a.vx-b.vx)*.45; a.vx-=v; b.vx+=v; }
+        else { const sy=(a.y+a.h/2 < b.y+b.h/2)?-1:1; a.y+=sy*oy*.5; b.y-=sy*oy*.5; const v=(a.vy-b.vy)*.35; a.vy-=v; b.vy+=v; }
+        a.awake=b.awake=true;
+      }
+    }
+  }
+
+  function poolInfoAt(x) {
+    if (!state.poolBuckets || !state.poolBuckets.length) return null;
+    const i = clamp(Math.floor(x/W*state.poolBuckets.length),0,state.poolBuckets.length-1);
+    return state.poolBuckets[i];
+  }
+  function updateWater(dt) {
+    const arr = state.water; const g=620;
+    if (arr.length > 850) arr.splice(0, arr.length-850);
+    for (const p of arr) {
+      const tr = liquidTrait(p.liquid);
+      p.age = (p.age||0)+dt; p.life -= dt*.035;
+      p.vy += g*dt*(tr.sticky?.92:1);
+      p.vx *= Math.pow(tr.sticky?.988:.995, dt*60);
+      p.vy *= Math.pow(tr.sticky?.992:.998, dt*60);
+      if (tr.soda && Math.random() < dt*2.8) { p.vy -= rand(35,90); p.vx += rand(-35,35); p.foam = true; }
+      if (tr.cool && Math.random() < dt*.7) { p.vx *= .94; p.vy *= .95; }
+    }
+    // fluid particle pressure: makes pooled liquid swish instead of just falling straight down
+    for (let i=0;i<arr.length;i++) {
+      const a=arr[i];
+      for (let j=i+1;j<arr.length;j++) {
+        const b=arr[j]; const dx=b.x-a.x, dy=b.y-a.y, d2=dx*dx+dy*dy;
+        if (d2<156 && d2>.05) {
+          const d=Math.sqrt(d2), push=(12.5-d)*.021;
+          const px=dx/d*push, py=dy/d*push;
+          a.vx-=px; a.vy-=py; b.vx+=px; b.vy+=py;
+        }
+      }
+    }
+    for (const p of arr) {
+      const tr = liquidTrait(p.liquid);
+      p.x += p.vx*dt; p.y += p.vy*dt;
+      if (p.x < p.r) { p.x=p.r; p.vx=Math.abs(p.vx)*.45; }
+      if (p.x > W-p.r) { p.x=W-p.r; p.vx=-Math.abs(p.vx)*.45; }
+      if (p.y+p.r>507) { p.y=507-p.r; p.vy*=-.08; p.vx*=tr.sticky?.78:.88; p.x += Math.sin(performance.now()/250 + p.y)*.08*tr.push; }
+      // liquid can hit surviving targets directly and slowly shove/drown them
+      for (const m of state.mugs) {
+        if (m.dead) continue;
+        const d=len(p.x-m.x,p.y-m.y);
+        if (d < m.r + p.r + 2 && d > .01) {
+          const nx=(m.x-p.x)/d, ny=(m.y-p.y)/d;
+          const hitPower = (Math.abs(p.vx)+Math.abs(p.vy))*.0025*(tr.soda?1.65:1);
+          m.vx += nx*hitPower*70/(m.mass||1); m.vy += ny*hitPower*52/(m.mass||1); m.awake=true;
+          p.vx -= nx*hitPower*90; p.vy -= ny*hitPower*80;
+          if (hitPower > .42 || tr.soda) damage(m, hitPower*(tr.soda?2.4:1.15), p.x, p.y);
+        }
+      }
+      for (const bl of state.blocks) {
+        if (bl.dead) continue;
+        if (p.x>bl.x-2 && p.x<bl.x+bl.w+2 && p.y>bl.y-2 && p.y<bl.y+bl.h+2) {
+          const left=Math.abs(p.x-bl.x), right=Math.abs(bl.x+bl.w-p.x), top=Math.abs(p.y-bl.y), bottom=Math.abs(bl.y+bl.h-p.y);
+          const mn=Math.min(left,right,top,bottom);
+          if (mn===top) { p.y=bl.y-p.r; p.vy*=-.05; p.vx*=.9; }
+          else if (mn===bottom) { p.y=bl.y+bl.h+p.r; p.vy=Math.abs(p.vy)*.15; }
+          else if (mn===left) { p.x=bl.x-p.r; p.vx=-Math.abs(p.vx)*.35; }
+          else { p.x=bl.x+bl.w+p.r; p.vx=Math.abs(p.vx)*.35; }
+          bl.vx += p.vx*.0028*tr.push/(bl.mass||1); bl.vy += p.vy*.0011*tr.buoyancy/(bl.mass||1); bl.awake = bl.awake || Math.abs(p.vx)>45 || tr.soda;
+          if (tr.soda && Math.random()<dt*1.4) bl.vy -= 10/(bl.mass||1);
+        }
+      }
+    }
+
+    // Build a lightweight pool model. Anything sitting in a deep bucket floats, drifts, and can drown if it is an enemy.
+    const bucketCount=32; const buckets=[]; for(let i=0;i<bucketCount;i++) buckets.push({n:0,y:0,vx:0,soda:0,sticky:0,cool:0,color:"#8bd5ff",surface:510});
+    for (const p of arr) if (p.y>438) {
+      const bi=clamp(Math.floor(p.x/W*bucketCount),0,bucketCount-1); const b=buckets[bi], tr=liquidTrait(p.liquid);
+      b.n++; b.y+=p.y; b.vx+=p.vx; b.color=p.color; if(tr.soda)b.soda++; if(tr.sticky)b.sticky++; if(tr.cool)b.cool++;
+    }
+    for (let i=0;i<bucketCount;i++) {
+      const b=buckets[i];
+      if (b.n>0) { b.avgY=b.y/b.n; b.avgVx=b.vx/b.n; b.surface=clamp(507 - Math.min(62, b.n*1.7), 442, 507); }
+      else { b.avgY=507; b.avgVx=0; b.surface=510; }
+    }
+    state.poolBuckets = buckets;
+
+    for (const o of [...allBirds(), ...state.mugs, ...state.blocks]) {
+      if (!o || o.dead) continue;
+      const ox=o.kind==="block"?o.x+o.w/2:o.x, oy=o.kind==="block"?o.y+o.h/2:o.y;
+      let near=0, avx=0, avy=0, soda=0, sticky=0, cool=0;
+      for (const p of arr) {
+        const rad=o.kind==="block"?Math.max(o.w,o.h)*.62:(o.r||25)+12;
+        const d=len(p.x-ox,p.y-oy);
+        if (d<rad) {
+          const tr=liquidTrait(p.liquid); near++; avx+=p.vx; avy+=p.vy; if(tr.soda)soda++; if(tr.sticky)sticky++; if(tr.cool)cool++;
+          p.vx += (o.vx-p.vx)*.018; p.vy += (o.vy-p.vy)*.012;
+        }
+      }
+      const pool=poolInfoAt(ox);
+      const bottom=o.kind==="block"?o.y+o.h:oy+(o.r||20);
+      const inPool = pool && pool.n>5 && bottom > pool.surface;
+      if (near>5 || inPool) {
+        const n=Math.max(near, inPool?pool.n:0), flow=(near?avx/near:(pool?pool.avgVx:0));
+        const mass=o.mass||1;
+        const sodaBoost=(soda>3 || (pool&&pool.soda>4));
+        const stickyDrag=(sticky>4 || (pool&&pool.sticky>5));
+        o.vx += flow*dt*.18/(mass);
+        if (inPool) {
+          const depth=clamp((bottom-pool.surface)/65,0,1);
+          o.vy -= (o.kind==="block"?220:310)*depth*dt/(mass*.85);
+          o.vx *= Math.pow(stickyDrag?.90:.965, dt*60);
+          if (sodaBoost) { o.vy -= 80*dt/(mass*.7); if(Math.random()<dt*2) state.shards.push({x:ox+rand(-18,18),y:pool.surface+rand(-4,6),vx:rand(-45,45),vy:rand(-125,-30),life:rand(.25,.55),size:rand(2,5),color:"#ffffff"}); }
+        }
+        if (near>7) { o.vx*=stickyDrag?Math.pow(.93,dt*60):.986; o.vy*=stickyDrag?Math.pow(.965,dt*60):.982; }
+        if (o.kind==="mug") {
+          o.soak = (o.soak||0) + dt*(n/9)*(sodaBoost?1.45:1);
+          if (n>10 || inPool) damage(o, dt*(n*.23 + (sodaBoost?2.6:0.65)), ox, oy);
+          if (o.soak > 2.6 && (near>9 || inPool)) breakMug(o, ox, oy);
+        } else if (o.kind==="block") {
+          if (sodaBoost) o.awake = true;
+          if (stickyDrag) o.vx*=.98;
+        } else if (o.kind==="bird") {
+          o.wetness = (o.wetness||0) + dt*(n/12);
+          if (sodaBoost) o.vy -= 22*dt;
+        }
+      }
+    }
+    state.water = arr.filter(p=>p.life>0 && p.y<545);
+  }
+  function updateShards(dt) {
+    for (const s of state.shards) { s.vy += 650*dt; s.x+=s.vx*dt; s.y+=s.vy*dt; s.vx*=.99; if(s.y>508){s.y=508;s.vy*=-.18;s.vx*=.8} s.life-=dt; }
+    state.shards = state.shards.filter(s=>s.life>0);
+  }
+
+  function draw() {
+    const bg=ASSETS["bg_2011.png"];
+    if (bg && bg.ok) ctx.drawImage(bg,0,0,W,H); else drawFallbackBg();
+    drawWorldChrome(); drawSling();
+    if (state.current && !state.current.launched) drawAim();
+    drawWater(false);
+    for (const bl of state.blocks) if(!bl.dead) drawBlock(bl);
+    for (const m of state.mugs) if(!m.dead) drawMug(m);
+    for (const b of allBirds()) drawBird(b);
+    if (state.eagle) drawMighty(state.eagle);
+    drawWater(true);
+    drawShards(); drawQueue(); drawVignette();
+  }
+  function drawFallbackBg() {
+    const grd=ctx.createLinearGradient(0,0,0,H); grd.addColorStop(0,"#78c5ef"); grd.addColorStop(.68,"#3f8ec4"); grd.addColorStop(.69,"#64b760"); grd.addColorStop(1,"#37843c"); ctx.fillStyle=grd; ctx.fillRect(0,0,W,H);
+  }
+  function drawWorldChrome() {
+    ctx.save(); ctx.fillStyle="rgba(70,55,30,.33)"; ctx.fillRect(0,506,W,12); ctx.fillStyle="rgba(255,255,255,.18)"; ctx.fillRect(0,423,W,2); ctx.restore();
+  }
+  function drawSling() {
+    const img=ASSETS["slingshot.png"]; if(img&&img.ok) ctx.drawImage(img,sling.x-64,sling.y-94,128,128); else {ctx.strokeStyle="#6b3518";ctx.lineWidth=12;ctx.beginPath();ctx.moveTo(sling.x,sling.y+50);ctx.lineTo(sling.x-30,sling.y-55);ctx.moveTo(sling.x,sling.y+50);ctx.lineTo(sling.x+30,sling.y-55);ctx.stroke();}
+    if (state.dragging && state.current) { ctx.strokeStyle="#3b2416"; ctx.lineWidth=5; ctx.beginPath(); ctx.moveTo(sling.x-28,sling.y-42); ctx.lineTo(state.current.x,state.current.y); ctx.lineTo(sling.x+28,sling.y-42); ctx.stroke(); }
+  }
+  function drawAim() {
+    if (!state.dragging || !state.current) return;
+    const b=state.current; const vx=(sling.x-b.x)*7.15, vy=(sling.y-b.y)*7.15; let x=sling.x,y=sling.y;
+    ctx.save(); ctx.fillStyle="rgba(255,255,255,.55)";
+    for (let i=1;i<18;i++) { const t=i*.105; const px=x+vx*t, py=y+vy*t+365*t*t; ctx.globalAlpha=Math.max(0,1-i/20); ctx.beginPath(); ctx.arc(px,py,4,0,Math.PI*2); ctx.fill(); }
+    ctx.restore();
+  }
+  function drawBird(b) {
+    ctx.save();
+    for (let i=0;i<b.trail.length;i++) { const p=b.trail[i]; ctx.globalAlpha=i/b.trail.length*.22; ctx.fillStyle="#fff0c0"; ctx.beginPath(); ctx.arc(p.x,p.y,b.r*(i/b.trail.length),0,Math.PI*2); ctx.fill(); }
+    ctx.globalAlpha=1; ctx.translate(b.x,b.y); ctx.rotate(b.rot||0);
+    const img=ASSETS[b.sprite]; if(img&&img.ok) ctx.drawImage(img,-b.r*1.55,-b.r*1.55,b.r*3.1,b.r*3.1); else { ctx.fillStyle="#b86c31"; ctx.beginPath(); ctx.arc(0,0,b.r,0,Math.PI*2); ctx.fill(); ctx.fillStyle="#2b1508"; ctx.beginPath(); ctx.arc(-7,-5,3,0,7);ctx.arc(7,-5,3,0,7);ctx.fill(); }
+    ctx.restore();
+  }
+  function drawBlock(b) {
+    ctx.save(); ctx.translate(b.x+b.w/2,b.y+b.h/2); ctx.rotate(b.angle*.08); ctx.globalAlpha=clamp(b.hp/(blockDefs[b.type].hp*.75),.55,1);
+    const img=ASSETS[blockDefs[b.type].sprite];
+    if(img&&img.ok) { const pat=ctx.createPattern(img,"repeat"); ctx.fillStyle=pat; roundRect(ctx,-b.w/2,-b.h/2,b.w,b.h,6); ctx.fill(); ctx.strokeStyle="rgba(50,35,25,.55)"; ctx.lineWidth=2; ctx.stroke(); }
+    else { ctx.fillStyle=blockDefs[b.type].tint; roundRect(ctx,-b.w/2,-b.h/2,b.w,b.h,6); ctx.fill(); }
+    ctx.restore();
+  }
+  function drawMug(m) {
+    ctx.save(); ctx.translate(m.x,m.y); ctx.rotate(Math.sin(m.wobble)*.08 + m.vx*.0004);
+    const img=ASSETS[m.sprite];
+    if(img&&img.ok) {
+      if (m.isBar) ctx.drawImage(img,-39,-39,78,78); else ctx.drawImage(img,-35,-38,70,70);
+    } else if (m.isBar) {
+      ctx.fillStyle=liquidColors[m.liquid]||"#5a2b1c"; roundRect(ctx,-24,-31,48,62,8); ctx.fill(); ctx.strokeStyle="#2c1308"; ctx.lineWidth=3; ctx.stroke();
+    } else { ctx.fillStyle="#f4f4ee"; roundRect(ctx,-22,-25,44,52,10); ctx.fill(); ctx.fillStyle=liquidColors[m.liquid]||"#8bd5ff"; ctx.beginPath(); ctx.ellipse(0,-22,17,7,0,0,7); ctx.fill(); }
+    ctx.restore();
+  }
+  function drawMighty(e) {
+    ctx.save(); ctx.translate(e.x,e.y); ctx.rotate(Math.sin(e.flap)*.12);
+    const img=ASSETS["mighty_treat.png"];
+    if (img&&img.ok) ctx.drawImage(img,-78,-54,156,108);
+    else { ctx.fillStyle="#ffe99b"; ctx.beginPath(); ctx.ellipse(0,0,72,32,0,0,7); ctx.fill(); ctx.fillStyle="#b56d2e"; ctx.beginPath(); ctx.arc(0,-8,25,0,7); ctx.fill(); }
+    ctx.restore();
+  }
+  function drawWater(top) {
+    if (!state.water.length) return;
+    ctx.save(); ctx.globalCompositeOperation = top ? "source-over" : "multiply";
+    for (const p of state.water) {
+      if ((!top && p.y<462) || (top && p.y>=462)) continue;
+      const r=p.r*(top?1.15:1.45); const g=ctx.createRadialGradient(p.x-r*.3,p.y-r*.35,1,p.x,p.y,r*1.6);
+      g.addColorStop(0,"rgba(255,255,255,.75)"); g.addColorStop(.18,p.foam?"rgba(255,255,255,.65)":p.color); g.addColorStop(1,hexAlpha(p.color,.23));
+      ctx.fillStyle=g; ctx.beginPath(); ctx.ellipse(p.x,p.y,r*1.25,r*.8,Math.sin(p.x*.04+p.y*.02)*.28,0,Math.PI*2); ctx.fill();
+    }
+    // pooled surface shimmer; this matches the gameplay pool model used for floating and drowning
+    const buckets=state.poolBuckets&&state.poolBuckets.length?state.poolBuckets:[];
+    ctx.globalAlpha=.46; ctx.beginPath();
+    let started=false; const t=performance.now()/260;
+    for(let i=0;i<buckets.length;i++) if(buckets[i].n>4) { const x=i*W/buckets.length+W/buckets.length/2; const y=clamp(buckets[i].surface + Math.sin(t+i)*4,442,507); if(!started){ctx.moveTo(x,y); started=true;} else ctx.lineTo(x,y); }
+    if(started){
+      const color = buckets.find(b=>b.n>4)?.color || "#8bd5ff";
+      const pg=ctx.createLinearGradient(0,450,0,508); pg.addColorStop(0,hexAlpha(color,.42)); pg.addColorStop(1,hexAlpha(color,.23));
+      ctx.fillStyle=pg; ctx.lineTo(W,508);ctx.lineTo(0,508);ctx.closePath();ctx.fill();
+      ctx.globalAlpha=.55; ctx.strokeStyle="rgba(255,255,255,.46)"; ctx.lineWidth=2; ctx.stroke();
+    }
+    ctx.restore();
+  }
+  function drawShards() {
+    ctx.save();
+    for (const s of state.shards) { ctx.globalAlpha=clamp(s.life,0,1); ctx.fillStyle=s.color; ctx.save(); ctx.translate(s.x,s.y); ctx.rotate(s.x*.03+s.y*.02); ctx.fillRect(-s.size/2,-s.size/2,s.size,s.size*.66); ctx.restore(); }
+    ctx.restore();
+  }
+  function drawQueue() {
+    ctx.save(); let x=52; const y=485;
+    for (let i=state.queueIndex+1; i<state.birds.length; i++) { const def=birdDefs[state.birds[i]], img=ASSETS[def.sprite]; if(img&&img.ok) ctx.drawImage(img,x,y-25,42,42); else {ctx.fillStyle="#b86c31";ctx.beginPath();ctx.arc(x+21,y-4,16,0,7);ctx.fill();} x+=38; }
+    ctx.fillStyle="rgba(255,255,255,.75)"; ctx.font="bold 13px Trebuchet MS"; ctx.fillText("next",52,522); ctx.restore();
+  }
+  function drawVignette() {
+    const g=ctx.createRadialGradient(W/2,H/2,120,W/2,H/2,620); g.addColorStop(0,"rgba(0,0,0,0)"); g.addColorStop(1,"rgba(0,0,0,.34)"); ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  }
+  function roundRect(c,x,y,w,h,r){ c.beginPath(); c.moveTo(x+r,y); c.arcTo(x+w,y,x+w,y+h,r); c.arcTo(x+w,y+h,x,y+h,r); c.arcTo(x,y+h,x,y,r); c.arcTo(x,y,x+w,y,r); c.closePath(); }
+  function hexAlpha(hex,a) {
+    const c = hex.replace("#",""); if(c.length!==6) return `rgba(120,205,255,${a})`;
+    const r=parseInt(c.slice(0,2),16), g=parseInt(c.slice(2,4),16), b=parseInt(c.slice(4,6),16); return `rgba(${r},${g},${b},${a})`;
+  }
+
+  let last=performance.now();
+  function loop(now) { const dt=clamp((now-last)/1000,0,.033); last=now; for(let i=0;i<2;i++) step(dt/2); draw(); requestAnimationFrame(loop); }
+  requestAnimationFrame(loop);
+  updateButtons();
+})();
+</script>
+</body>
+</html>
